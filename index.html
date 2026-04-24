@@ -30,7 +30,6 @@
             display: flex;
             align-items: center;
             border-bottom: 2px solid var(--bk-yellow);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -74,7 +73,7 @@
         .video-title { font-size: 0.85rem; font-weight: 700; color: var(--bk-gray); text-transform: uppercase; }
 
         .status-badge { display: flex; align-items: center; font-size: 10px; color: var(--bk-yellow); font-weight: bold; }
-        .status-dot { width: 6px; height: 6px; background-color: var(--bk-yellow); border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px var(--bk-yellow); }
+        .status-dot { width: 6px; height: 6px; background-color: var(--bk-yellow); border-radius: 50%; margin-right: 6px; }
 
         .video-wrapper { position: relative; aspect-ratio: 16 / 9; background: #000; }
         video { width: 100%; height: 100%; display: block; object-fit: cover; }
@@ -92,11 +91,8 @@
             font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background 0.2s;
-            opacity: 0.9;
+            z-index: 10;
         }
-
-        .fs-button:hover { background-color: var(--bk-yellow-hover); opacity: 1; }
 
         @media (min-width: 1600px) { .monitor-grid { grid-template-columns: repeat(5, 1fr); } }
     </style>
@@ -105,7 +101,7 @@
 
     <nav class="navbar">
         <div class="logo-container">
-            <img src="https://betking.com.ua/uploads/logo-project/logo_betking.svg" alt="Betking Logo" class="logo-img">
+            <img src="https://betking.com.ua" alt="Betking Logo" class="logo-img">
             <span class="monitor-label">Live Monitor</span>
         </div>
     </nav>
@@ -116,8 +112,8 @@
 
     <script>
         const channels = [
-            { id: 1, title: "Шахтар Донецьк", url: "https://a52.azplay31.me/hls/streama206263/index.m3u8?cst=0" },
-            { id: 2, title: "Lobby Stream 02", url: "" }, // Пустые URL не будут вызывать ошибку
+            { id: 1, title: "Шахтар Донецьк", url: "https://azplay31.me" },
+            { id: 2, title: "Lobby Stream 02", url: "https://azplay31.me" },
             { id: 3, title: "Table VIP 03", url: "" },
             { id: 4, title: "Table VIP 04", url: "" },
             { id: 5, title: "Game Studio 05", url: "" }
@@ -140,7 +136,8 @@
                     <div class="status-badge"><div class="status-dot"></div> LIVE</div>
                 </div>
                 <div class="video-wrapper">
-                    <video id="player-${ch.id}" muted autoplay playsinline controls></video>
+                    <!-- ИСПРАВЛЕНО: Удален autoplay, добавлены controls -->
+                    <video id="player-${ch.id}" muted playsinline controls preload="none"></video>
                     <button class="fs-button" onclick="openFullscreen('player-${ch.id}')">Экран</button>
                 </div>
             `;
@@ -148,21 +145,15 @@
 
             const video = document.getElementById(`player-${ch.id}`);
 
-            // ИСПРАВЛЕНО: Проверка наличия URL и правильная инициализация HLS
             if (ch.url) {
                 if (Hls.isSupported()) {
                     const hls = new Hls();
                     hls.loadSource(ch.url);
                     hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        video.play();
-                    });
+                    // ИСПРАВЛЕНО: Убрано автоматическое video.play()
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = ch.url;
                 }
-            } else {
-                // Если ссылки нет, можно вывести заглушку
-                video.style.background = "#1a1d24";
             }
         });
     </script>
