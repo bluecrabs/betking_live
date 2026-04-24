@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betking - Live Streams Monitor</title>
+    <script src="https://cloudflare.com"></script>
+    <style>
+        :root {
+            --bk-black: #0c0e12;
+            --bk-dark-blue: #161920;
+            --bk-yellow: #ffc107;
+            --bk-yellow-hover: #e0a800;
+            --bk-text: #ffffff;
+            --bk-gray: #8a8d91;
+            --bk-border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--bk-black);
+            color: var(--bk-text);
+            font-family: 'Roboto', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Шапка сайта */
+        .navbar {
+            background-color: var(--bk-dark-blue);
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--bk-yellow);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            height: 40px; /* Фиксированная высота для лого */
+        }
+
+        .logo-img {
+            height: 100%;
+            width: auto;
+        }
+
+        .monitor-label {
+            font-size: 11px;
+            color: var(--bk-gray);
+            margin-left: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            border-left: 1px solid var(--bk-border);
+            padding-left: 15px;
+        }
+
+        .container {
+            padding: 25px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* Сетка мониторинга */
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+        }
+
+        /* Карточка видео */
+        .video-card {
+            background-color: var(--bk-dark-blue);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--bk-border);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .video-card:hover {
+            border-color: var(--bk-yellow);
+            transform: translateY(-3px);
+        }
+
+        .video-header {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .video-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--bk-gray);
+            text-transform: uppercase;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+            color: var(--bk-yellow);
+            font-weight: bold;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--bk-yellow);
+            border-radius: 50%;
+            margin-right: 6px;
+            box-shadow: 0 0 8px var(--bk-yellow);
+        }
+
+        .video-wrapper {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .fs-button {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background-color: var(--bk-yellow);
+            color: #000;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+            opacity: 0.9;
+        }
+
+        .fs-button:hover {
+            background-color: var(--bk-yellow-hover);
+            opacity: 1;
+        }
+
+        @media (min-width: 1600px) {
+            .monitor-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="https://betking.com.ua/uploads/logo-project/logo_betking.svg" alt="Betking Logo" class="logo-img">
+            <span class="monitor-label">Live Monitor</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="monitor-grid" id="streams-container"></div>
+    </div>
+
+    <script>
+        const channels = [
+            { id: 1, title: "Шахтар Донецьк", url: "https://a52.azplay31.me/hls/streama206263/index.m3u8?cst=0" },
+            { id: 2, title: "Lobby Stream 02" },
+            { id: 3, title: "Table VIP 03" },
+            { id: 4, title: "Table VIP 04" },
+            { id: 5, title: "Game Studio 05" },
+            { id: 6, title: "Game Studio 06" },
+            { id: 7, title: "Roulette 07" },
+            { id: 8, title: "Blackjack 08" },
+            { id: 9, title: "Exterior Cam 09" },
+            { id: 10, title: "Main Hall 10" }
+        ];
+
+        const container = document.getElementById('streams-container');
+
+        function openFullscreen(id) {
+            const video = document.getElementById(id);
+            if (video.requestFullscreen) video.requestFullscreen();
+            else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+        }
+
+        channels.forEach(ch => {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <div class="video-header">
+                    <span class="video-title">${ch.title}</span>
+                    <div class="status-badge"><div class="status-dot"></div> LIVE</div>
+                </div>
+                <div class="video-wrapper">
+                    <video id="player-${ch.id}" muted autoplay playsinline></video>
+                    <button class="fs-button" onclick="openFullscreen('player-${ch.id}')">В весь экран</button>
+                </div>
+            `;
+            container.appendChild(card);
+
+            const video = document.getElementById(`player-${ch.id}`);
+            if (Hls.isSupported()) {
+                const hls = new Hls({ capLevelToPlayerSize: true, maxBufferLength: 5 });
+                hls.loadSource(ch.url);
+                hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = ch.url;
+            }
+        });
+    </script>
+</body>
+</html>
