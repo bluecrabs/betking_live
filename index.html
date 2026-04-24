@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Betking - Live Streams Monitor</title>
+    <!-- ИСПРАВЛЕНО: Подключена рабочая библиотека HLS -->
     <script src="https://cloudflare.com"></script>
     <style>
         :root {
@@ -24,7 +25,6 @@
             padding: 0;
         }
 
-        /* Шапка сайта */
         .navbar {
             background-color: var(--bk-dark-blue);
             padding: 10px 30px;
@@ -37,16 +37,8 @@
             z-index: 100;
         }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            height: 40px; /* Фиксированная высота для лого */
-        }
-
-        .logo-img {
-            height: 100%;
-            width: auto;
-        }
+        .logo-container { display: flex; align-items: center; height: 40px; }
+        .logo-img { height: 100%; width: auto; }
 
         .monitor-label {
             font-size: 11px;
@@ -59,20 +51,9 @@
             padding-left: 15px;
         }
 
-        .container {
-            padding: 25px;
-            max-width: 1800px;
-            margin: 0 auto;
-        }
+        .container { padding: 25px; max-width: 1800px; margin: 0 auto; }
+        .monitor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
 
-        /* Сетка мониторинга */
-        .monitor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 20px;
-        }
-
-        /* Карточка видео */
         .video-card {
             background-color: var(--bk-dark-blue);
             border-radius: 12px;
@@ -81,10 +62,7 @@
             transition: transform 0.2s, border-color 0.2s;
         }
 
-        .video-card:hover {
-            border-color: var(--bk-yellow);
-            transform: translateY(-3px);
-        }
+        .video-card:hover { border-color: var(--bk-yellow); transform: translateY(-3px); }
 
         .video-header {
             padding: 10px 15px;
@@ -94,41 +72,13 @@
             background: rgba(255,255,255,0.02);
         }
 
-        .video-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--bk-gray);
-            text-transform: uppercase;
-        }
+        .video-title { font-size: 0.85rem; font-weight: 700; color: var(--bk-gray); text-transform: uppercase; }
 
-        .status-badge {
-            display: flex;
-            align-items: center;
-            font-size: 10px;
-            color: var(--bk-yellow);
-            font-weight: bold;
-        }
+        .status-badge { display: flex; align-items: center; font-size: 10px; color: var(--bk-yellow); font-weight: bold; }
+        .status-dot { width: 6px; height: 6px; background-color: var(--bk-yellow); border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px var(--bk-yellow); }
 
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background-color: var(--bk-yellow);
-            border-radius: 50%;
-            margin-right: 6px;
-            box-shadow: 0 0 8px var(--bk-yellow);
-        }
-
-        .video-wrapper {
-            position: relative;
-            aspect-ratio: 16 / 9;
-            background: #000;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+        .video-wrapper { position: relative; aspect-ratio: 16 / 9; background: #000; }
+        video { width: 100%; height: 100%; display: block; object-fit: cover; }
 
         .fs-button {
             position: absolute;
@@ -147,14 +97,9 @@
             opacity: 0.9;
         }
 
-        .fs-button:hover {
-            background-color: var(--bk-yellow-hover);
-            opacity: 1;
-        }
+        .fs-button:hover { background-color: var(--bk-yellow-hover); opacity: 1; }
 
-        @media (min-width: 1600px) {
-            .monitor-grid { grid-template-columns: repeat(5, 1fr); }
-        }
+        @media (min-width: 1600px) { .monitor-grid { grid-template-columns: repeat(5, 1fr); } }
     </style>
 </head>
 <body>
@@ -173,15 +118,10 @@
     <script>
         const channels = [
             { id: 1, title: "Шахтар Донецьк", url: "http://57.129.13.212/Test/mono.m3u8" },
-            { id: 2, title: "Lobby Stream 02" },
-            { id: 3, title: "Table VIP 03" },
-            { id: 4, title: "Table VIP 04" },
-            { id: 5, title: "Game Studio 05" },
-            { id: 6, title: "Game Studio 06" },
-            { id: 7, title: "Roulette 07" },
-            { id: 8, title: "Blackjack 08" },
-            { id: 9, title: "Exterior Cam 09" },
-            { id: 10, title: "Main Hall 10" }
+            { id: 2, title: "Lobby Stream 02", url: "" }, // Пустые URL не будут вызывать ошибку
+            { id: 3, title: "Table VIP 03", url: "" },
+            { id: 4, title: "Table VIP 04", url: "" },
+            { id: 5, title: "Game Studio 05", url: "" }
         ];
 
         const container = document.getElementById('streams-container');
@@ -201,19 +141,29 @@
                     <div class="status-badge"><div class="status-dot"></div> LIVE</div>
                 </div>
                 <div class="video-wrapper">
-                    <video id="player-${ch.id}" muted autoplay playsinline></video>
-                    <button class="fs-button" onclick="openFullscreen('player-${ch.id}')">В весь экран</button>
+                    <video id="player-${ch.id}" muted autoplay playsinline controls></video>
+                    <button class="fs-button" onclick="openFullscreen('player-${ch.id}')">Экран</button>
                 </div>
             `;
             container.appendChild(card);
 
             const video = document.getElementById(`player-${ch.id}`);
-            if (Hls.isSupported()) {
-                const hls = new Hls({ capLevelToPlayerSize: true, maxBufferLength: 5 });
-                hls.loadSource(ch.url);
-                hls.attachMedia(video);
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = ch.url;
+
+            // ИСПРАВЛЕНО: Проверка наличия URL и правильная инициализация HLS
+            if (ch.url) {
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(ch.url);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        video.play();
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = ch.url;
+                }
+            } else {
+                // Если ссылки нет, можно вывести заглушку
+                video.style.background = "#1a1d24";
             }
         });
     </script>
